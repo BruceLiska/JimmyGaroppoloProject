@@ -1,0 +1,1276 @@
+#These will be all of the packages you will need.
+
+install.packages("dplyr")
+install.packages("tidyverse")
+install.packages("nflWAR")
+library(dplyr)
+library(tidyverse)
+library(nflWAR)
+
+#This command will get play by play data for the 2017-2018 NFL Season, from Ron Yurko's github account.
+
+pbpnfl=get_pbp_data(2017)
+
+
+#This code will get all of the San Francisco games, by filtering them by when the 49ers were on defense or offense, and combining them together
+
+Defense49ers = filter(pbpnfl, pbpnfl$DefensiveTeam == "SF")
+Offense49ers = filter(pbpnfl, pbpnfl$posteam == "SF")
+All49ersPlays=rbind(Defense49ers, Offense49ers)
+
+#This next part will filter out the games Jimmy Garoppolo started, based on the date the game was. I got that via a google search, then put that date into the same format as in the play by play data. I picked this method because the 49ers play the Rams twice a year, I couldn't filter based on team as easily.
+
+VersusChicago = filter(All49ersPlays, Date == "2017-12-03")
+VersusHouston = filter(All49ersPlays, Date == "2017-12-10")
+VersusTennessee = filter(All49ersPlays, Date == "2017-12-17")
+VersusJacksonville = filter(All49ersPlays, Date == "2017-12-24")
+VersusLosAngelesRams = filter(All49ersPlays, Date == "2017-12-31")
+
+#This combines all games Garoppolo started into one data frame.
+
+JimmyGaroppoloStarting=rbind(VersusChicago,VersusHouston,VersusJacksonville,VersusLosAngelesRams,VersusTennessee)
+
+#This will give you the defensive stats for when Garoppolo was starting (The 49ers defensive stats)
+
+GaropplosDefenseBears=filter(VersusChicago, posteam == "CHI")
+GaropplosDefenseJaguars=filter(VersusJacksonville, posteam == "JAX")
+GaropplosDefenseTitans=filter(VersusTennessee, posteam == "TEN")
+GaropplosDefenseTexans=filter(VersusHouston, posteam == "HOU")
+GaropplosDefenseRams=filter(VersusLosAngelesRams, posteam == "LA")
+
+GaroppolosTotalDefense=rbind(GaropplosDefenseBears,GaropplosDefenseJaguars,GaropplosDefenseRams,GaropplosDefenseTexans,GaropplosDefenseTitans)
+
+
+#This will get the stats of Garoppolo, along with Brian Hoyer and CJ Beathard. I am combining Hoyer and Beathard's stats because I am comparing Garoppolo to Hoyer AND Beathard. I am not comparing all 3 to each other.
+
+JimmyGaroppolosOffense=filter(JimmyGaroppoloStarting, posteam == "SF")
+OtherQBsFor49ers = filter(All49ersPlays, Date <= "2017-11-26")
+
+OQBDefense=filter(Defense49ers, Defense49ers$Date <= "2017-11-26")
+
+#Here is how Jimmy Garoppolo's receivers did after the catch compared to when Garoppolo wasn't quarterback:
+
+JimmyGaroppoloPass = filter(JimmyGaroppolosOffense, Passer == "J.Garoppolo")
+GaroppoloPassComplete = filter(JimmyGaroppoloPass, PassOutcome == "Complete")
+yac = GaroppoloPassComplete$YardsAfterCatch
+mean(yac)
+
+OtherQBsPassAttempt = filter(OtherQBsFor49ers, PassAttempt == "1")
+OtherQBsCompletedPass = filter(OtherQBsPassAttempt, PassOutcome == "Complete")
+yac = OtherQBsCompletedPass$YardsAfterCatch
+mean(yac)
+OQBOffense=filter(OtherQBsFor49ers, posteam == "SF")
+
+###This next part will focus on the running game with and without Jimmy Garoppolo###
+
+#This next section will be about the running game with Garoppolo as the quarterback.
+
+
+GaroppoloRunGame = filter(JimmyGaroppolosOffense, PlayType == "Run")
+mean(GaroppoloRunGame$Yards.Gained)
+
+#This shows the different run locations for when Garoppolo was the quarterback
+
+JGRunLocationLeft=filter(GaroppoloRunGame, RunLocation == "left")
+JGRunLocationMiddle=filter(GaroppoloRunGame, RunLocation == "middle")
+JGRunLocationRight=filter(GaroppoloRunGame, RunLocation == "right")
+
+mean(JGRunLocationLeft$Yards.Gained)
+mean(JGRunLocationMiddle$Yards.Gained)
+mean(JGRunLocationRight$Yards.Gained)
+
+#This is the run game without Garoppolo as the quarterback
+
+OtherQBsRunGame = filter(OtherQBsFor49ers, PlayType == "Run")
+mean(OtherQBsRunGame$Yards.Gained)
+
+#This will determine which runningback ran best based on run location with Garoppolo
+
+JGRunLocationLeftHyde=filter(JGRunLocationLeft, Rusher == "C.Hyde")
+mean(JGRunLocationLeftHyde$Yards.Gained)
+
+JGRunLocationMiddleHyde=filter(JGRunLocationMiddle, Rusher == "C.Hyde")
+mean(JGRunLocationMiddleHyde$Yards.Gained)
+
+JGRunLocationRightHyde=filter(JGRunLocationRight, Rusher == "C.Hyde")
+mean(JGRunLocationRightHyde$Yards.Gained)
+
+#These are the number of carries from left to right, and the yards per carries for Carlos Hyde with Garoppolo
+
+#28,19,30 Direcetion L-R
+
+#4.9, 3.8, 2 YPC
+
+
+
+#These are the number of carries from left to right, and the yards per carries for Matt Breida with Garoppolo
+
+JGRunLocationLeftBreida=filter(JGRunLocationLeft, Rusher == "M.Breida")
+mean(JGRunLocationLeftBreida$Yards.Gained)
+
+JGRunLocationMiddleBreida=filter(JGRunLocationMiddle, Rusher == "M.Breida")
+mean(JGRunLocationMiddleBreida$Yards.Gained)
+
+JGRunLocationRightBreida=filter(JGRunLocationRight, Rusher == "M.Breida")
+mean(JGRunLocationRightBreida$Yards.Gained)
+
+#26, 6, 20
+
+#5.8, 1.2, 3.85
+
+
+
+#This will determine which runningback ran best based on run location without Garoppolo
+
+#Data for run locations when Garoppolo wasn't the quarterback
+
+OQBRunLocationLeft=filter(OtherQBsRunGame, RunLocation == "left")
+OQBRunLocationMiddle=filter(OtherQBsRunGame, RunLocation == "middle")
+OQBRunLocationRight=filter(OtherQBsRunGame, RunLocation == "right")
+
+mean(OQBRunLocationLeft$Yards.Gained)
+mean(OQBRunLocationMiddle$Yards.Gained)
+mean(OQBRunLocationRight$Yards.Gained)
+
+
+#This will determine which runningback ran best based on run location without Garoppolo
+
+OQBRunLocationLeftHyde=filter(OQBRunLocationLeft, Rusher == "C.Hyde")
+mean(OQBRunLocationLeftHyde$Yards.Gained)
+
+OQBRunLocationMiddleHyde=filter(OQBRunLocationMiddle, Rusher == "C.Hyde")
+mean(OQBRunLocationMiddleHyde$Yards.Gained)
+
+OQBRunLocationRightHyde=filter(OQBRunLocationRight, Rusher == "C.Hyde")
+mean(OQBRunLocationRightHyde$Yards.Gained)
+
+#These are the number of carries from left to right, and the yards per carries for Carlos Hyde without Garoppolo
+
+#55,51,51 Direcetion L-R
+
+#6.2, 3.5, 2.7 YPC
+
+OQBRunLocationLeftBreida=filter(OQBRunLocationLeft, Rusher == "M.Breida")
+mean(OQBRunLocationLeftBreida$Yards.Gained)
+
+OQBRunLocationMiddleBreida=filter(OQBRunLocationMiddle, Rusher == "M.Breida")
+mean(OQBRunLocationMiddleBreida$Yards.Gained)
+
+OQBRunLocationRightBreida=filter(OQBRunLocationRight, Rusher == "M.Breida")
+mean(OQBRunLocationRightBreida$Yards.Gained)
+
+#These are the number of carries from left to right, and the yards per carries for Matt Breida without Garoppolo
+
+#14, 13, 26 L-R
+
+#2.4, 4.9, 5 YPC
+
+
+###Graphs are here
+
+#This makes a data frame for Carlos Hyde based on which running lane he runs towards, and gets his Yards Per Carry (YPC) for the different QBs
+
+#This is the data needed for the data frame.
+
+QBs=c("Other QB","Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo")
+Position=c("Left","Left","Middle","Middle","Right","Right")
+YPC=c(6.2,4.9,3.5,3.8,2.7,2)
+
+HydeGraphStats=data.frame(QBs,Position,YPC)
+
+
+ggplot(data=HydeGraphStats, aes(x=Position, y=YPC, fill=QBs)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=YPC), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "Carlos Hyde YPC With and Without Garoppolo", x = "Running Lane", y = "Yards Per Carry")+
+  theme_minimal()
+
+
+#This is Matt Breida's graph, with YPC for different running lanes for different QBs.
+
+QBs=c("Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB")
+Position=c("Left","Left","Middle","Middle","Right","Right")
+YPC=c(5.8,2.4,1.2,4.9,3.85,5)
+
+BreidaGraphStats=data.frame(QBs,Position,YPC)
+
+ggplot(data=BreidaGraphStats, aes(x=Position, y=YPC, fill=QBs)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=YPC), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "Matt Breida YPC With and Without Garoppolo", x = "Running Lane", y = "Yards Per Carry")+
+  theme_minimal()
+
+
+
+#This will give you the average yards gained per play for Garoppolo and the other quarterbacks.
+
+mean(JimmyGaroppoloStarting$Yards.Gained)
+mean(OtherQBsFor49ers$Yards.Gained)
+
+#This will look at how some of the 49ers receivers played with Garoppolo
+
+GoodwinWithGaroppolo=filter(JimmyGaroppoloStarting, Receiver == "M.Goodwin")
+count(GoodwinWithGaroppolo)
+GoodwinRecWithGaroppolo=filter(GoodwinWithGaroppolo, Reception == "1")
+count(GoodwinRecWithGaroppolo)
+mean(GoodwinRecWithGaroppolo$Yards.Gained)
+
+KittleWithGaroppolo=filter(JimmyGaroppoloStarting, Receiver == "G.Kittle")
+count(KittleWithGaroppolo)
+KittleRecWithGaroppolo=filter(KittleWithGaroppolo, Reception == "1")
+count(KittleRecWithGaroppolo)
+mean(KittleRecWithGaroppolo$Yards.Gained)
+
+JuszczykWithGaroppolo=filter(JimmyGaroppoloStarting, Receiver == "K.Juszczyk")
+count(JuszczykWithGaroppolo)
+JuszczykRecWithGaroppolo=filter(JuszczykWithGaroppolo, Reception == "1")
+count(JuszczykRecWithGaroppolo)
+mean(JuszczykRecWithGaroppolo$Yards.Gained)
+
+TaylorWithGaroppolo=filter(JimmyGaroppoloStarting, Receiver == "T.Taylor")
+count(TaylorWithGaroppolo)
+TaylorRecWithGaroppolo=filter(TaylorWithGaroppolo, Reception == "1")
+count(TaylorRecWithGaroppolo)
+mean(TaylorRecWithGaroppolo$Yards.Gained)
+
+HydeWithGaroppolo=filter(JimmyGaroppoloStarting, Receiver == "C.Hyde")
+count(HydeWithGaroppolo)
+HydeRecWithGaroppolo=filter(HydeWithGaroppolo, Reception == "1")
+count(HydeRecWithGaroppolo)
+mean(HydeRecWithGaroppolo$Yards.Gained)
+
+
+#This will look at some the 49ers receivers without Garoppolo
+
+GoodwinWithoutGaroppolo=filter(OtherQBsFor49ers, Receiver == "M.Goodwin")
+count(GoodwinWithoutGaroppolo)
+GoodwinRecWithoutGaroppolo=filter(GoodwinWithoutGaroppolo, Reception == "1")
+count(GoodwinRecWithoutGaroppolo)
+mean(GoodwinRecWithoutGaroppolo$Yards.Gained)
+
+KittleWithoutGaroppolo=filter(OtherQBsFor49ers, Receiver == "G.Kittle")
+count(KittleWithoutGaroppolo)
+KittleRecWithoutGaroppolo=filter(KittleWithoutGaroppolo, Reception == "1")
+count(KittleRecWithoutGaroppolo)
+mean(KittleRecWithoutGaroppolo$Yards.Gained)
+
+JuszczykWithoutGaroppolo=filter(OtherQBsFor49ers, Receiver == "K.Juszczyk")
+count(JuszczykWithoutGaroppolo)
+JuszczykRecWithoutGaroppolo=filter(JuszczykWithoutGaroppolo, Reception == "1")
+count(JuszczykRecWithoutGaroppolo)
+mean(JuszczykRecWithoutGaroppolo$Yards.Gained)
+
+TaylorWithoutGaroppolo=filter(OtherQBsFor49ers, Receiver == "T.Taylor")
+count(TaylorWithoutGaroppolo)
+TaylorRecWithoutGaroppolo=filter(TaylorWithoutGaroppolo, Reception == "1")
+count(TaylorRecWithoutGaroppolo)
+mean(TaylorRecWithoutGaroppolo$Yards.Gained)
+
+HydeWithoutGaroppolo=filter(OtherQBsFor49ers, Receiver == "C.Hyde")
+count(HydeWithoutGaroppolo)
+HydeRecWithoutGaroppolo=filter(HydeWithoutGaroppolo, Reception == "1")
+count(HydeRecWithoutGaroppolo)
+mean(HydeRecWithoutGaroppolo$Yards.Gained)
+
+
+#This is how you make the graph for yards per catch for different QBs.
+
+
+QBs=c("Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB")
+Receiver=c("M.Goodwin","M.Goodwin","T.Taylor","T.Taylor","G.Kittle","G.Kittle","K.Juszczyk","K.Juszczyk","C.Hyde","C.Hyde")
+YPCat=c(13.24,21.77,11.72,9.26,14.93,10.39,11.47,7.63,5.5,5.94)
+
+YardsPerCatchGraph=data.frame(QBs,Receiver,YPCat)
+
+ggplot(data=YardsPerCatchGraph, aes(x=Receiver, y=YPCat, fill=QBs)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=YPC), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "Receivers Yards Per Catch With and Without Garoppolo", x = "Receiver Name", y = "Yards Per Catch")+
+  theme_minimal()
+
+
+
+#This code will make the graph for catches per game with different QBs
+
+
+QBs=c("Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB","Garoppolo","Other QB")
+Receiver=c("M.Goodwin","M.Goodwin","T.Taylor","T.Taylor","G.Kittle","G.Kittle","K.Juszczyk","K.Juszczyk","C.Hyde","C.Hyde")
+Catches=c(29,26,18,27,15,28,17,16,10,50)
+Games=c(5,11,5,11,5,11,5,11,5,11)
+CatchesPerGame=Catches/Games
+CatchesPerGame=data.frame(CatchesPerGame)
+CatchesPerGame=round(CatchesPerGame, digits = 2)
+
+CatchesPerGameGraph=data.frame(QBs,Receiver,CatchesPerGame)
+
+
+ggplot(data=CatchesPerGameGraph, aes(x=Receiver, y=CatchesPerGameGraph$CatchesPerGame, fill=QBs))+
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=CatchesPerGameGraph$CatchesPerGame), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "Receivers Catches Per Game With and Without Garoppolo", x = "Receiver Name", y = "Catches Per Game")+
+  theme_minimal()
+
+
+
+
+
+#Here are the stats for the run defense for the 49ers based on the different QBs
+
+GaroppolosRunDefense=filter(GaroppolosTotalDefense, PlayType == "Run")
+OQBRunDefense=filter(OQBDefense, PlayType == "Run")
+
+mean(GaroppolosRunDefense$Yards.Gained)
+mean(OQBRunDefense$Yards.Gained)
+
+
+#The pass defense for 49ers QBs
+
+GaroppoloPassDefense=filter(GaroppolosTotalDefense, PlayType == "Pass")
+OQBPassDefense=filter(OQBDefense, PlayType == "Pass")
+
+#Yards per catch for pass defenses for different QBs
+
+mean(GaroppoloPassDefense$Yards.Gained)
+mean(OQBPassDefense$Yards.Gained)
+
+
+
+GaroppoloDefDeepPass=filter(GaroppoloPassDefense, PassLength == "Deep")
+GaroppoloDefShortPass=filter(GaroppoloPassDefense, PassLength == "Short")
+
+OQBPDefDeepPass=filter(OQBPassDefense, PassLength == "Deep")
+OQBDefShortPass=filter(OQBPassDefense, PassLength == "Short")
+
+
+
+GaroppoloDefPassLeft=filter(GaroppoloPassDefense, PassLocation == "left")
+GaroppoloDefPassMid=filter(GaroppoloPassDefense, PassLocation == "middle")
+GaroppoloDefPassRight=filter(GaroppoloPassDefense, PassLocation == "right")
+
+mean(GaroppoloDefPassLeft$Yards.Gained)
+mean(GaroppoloDefPassMid$Yards.Gained)
+mean(GaroppoloDefPassRight$Yards.Gained)
+
+OQBDefPassLeft=filter(OQBPassDefense, PassLocation == "left")
+OQBDefPassMid=filter(OQBPassDefense, PassLocation == "middle")
+OQBDefPassRight=filter(OQBPassDefense, PassLocation == "right")
+
+mean(OQBDefPassLeft$Yards.Gained)
+mean(OQBDefPassMid$Yards.Gained)
+mean(OQBDefPassRight$Yards.Gained)
+
+
+#Graphs based off of pass location for 49ers defense with and without Garoppolo
+
+
+QBs=c("Garoppolo's Defense","Other QBs Defense","Garoppolo's Defense","Other QBs Defense","Garoppolo's Defense","Other QBs Defense")
+PassLocation=c("Left","Left","Middle","Middle","Right","Right")
+PassLocationNumbers=c(57,150,47,64,65,158)
+#I got the numbers above from the count (count(OQBDefPassLeft) of all of those data frames)
+Games=c(5,11,5,11,5,11)
+PassLocationNumbersPerGame=PassLocationNumbers/Games
+PassLocationNumbersPerGame=data.frame(PassLocationNumbersPerGame)
+PassLocationNumbersPerGame=round(PassLocationNumbersPerGame, digits = 1)
+TotalPassLocation=data.frame(QBs,PassLocation,PassLocationNumbersPerGame)
+
+
+ggplot(data=TotalPassLocation, aes(x=PassLocation, y=PassLocationNumbersPerGame, fill=QBs)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=PassLocationNumbersPerGame), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "The 49ers Pass Defense's Targeted Areas With Different QBs", x = "Pass Location", y = "Targets per Game")+
+  theme_minimal()
+
+#This is how to make the graph based on yards per catch for the 49ers defense for different pass locations
+
+
+QBs=c("Garoppolo's Defense","Other QBs Defense","Garoppolo's Defense","Other QBs Defense","Garoppolo's Defense","Other QBs Defense")
+PassLocation=c("Left","Left","Middle","Middle","Right","Right")
+PassLocationYards=c(7.9,7.6,7.2,6.7,5.8,8.1)
+#These are the mean of the yards gained from the data frames above
+PassDefYardsGraph=data.frame(QBs,PassLocation,PassLocationYards)
+
+ggplot(data=PassDefYardsGraph, aes(x=PassLocation, y=PassLocationYards, fill=QBs)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=PassLocationYards), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  labs(title = "The 49ers Pass Defense's Yards Per Catch Based on Location", x = "Pass Location", y = "Yards Per Catch")+
+  theme_minimal()
+
+
+
+#Look at 3rd down conversion percent with and without JimmyG
+
+
+GaroppoloThirdDownDefense=filter(GaroppolosTotalDefense, down =="3")
+GaroppoloThirdDownConversionDefense=filter(GaroppoloThirdDownDefense, GaroppoloThirdDownDefense$FirstDown == "1")
+
+OQBThirdDownDefense=filter(OQBDefense, down =="3")
+OQBThirdDownConversion=filter(OQBThirdDownDefense, FirstDown == "1")
+
+
+#This is the 49ers defense's completion percentage with and without Garoppolo
+
+GaroppoloDefenseCompletedPass=filter(GaroppolosTotalDefense, PassOutcome == "Complete")
+GaroppoloDefensePassAttempt=filter(GaroppolosTotalDefense, PassAttempt == "1")
+
+#Garoppolo's defense allowed 59.9% of passes to be completed
+
+OQBDefensePassAttempt=filter(OQBDefense, OQBDefense$PassAttempt == "1")
+OQBDefenseComplete=filter(OQBDefense, PassOutcome == "Complete")
+
+#Hoyer/Beathard's defense allowed 60.1% of passes to be completed
+
+
+
+#Interception and fumble stats for the 49ers defense
+
+GaroppoloDefenseInterception=filter(GaroppolosTotalDefense, GaroppolosTotalDefense$InterceptionThrown == "1")
+GaroppoloDefenseFumble=filter(GaroppolosTotalDefense, GaroppolosTotalDefense$RecFumbTeam == "SF")
+
+GaroppoloDefenseTurnover=rbind(GaroppoloDefenseInterception,GaroppoloDefenseFumble)
+
+
+
+OQBDefenseInterception=filter(OQBDefense, OQBDefense$InterceptionThrown == "1")
+OQBDefenseFumble=filter(OQBDefense, OQBDefense$RecFumbTeam == "SF")
+
+
+
+#With and without Garoppolo, the 49ers averaged about 1-2 turnovers per game on defense
+
+#Here are kicking stats for each of the QBs
+
+GaroppoloFieldGoalAttempts=filter(JimmyGaroppolosOffense, PlayType == "Field Goal")
+GaroppoloFieldGoalsMade=filter(GaroppoloFieldGoalAttempts, GaroppoloFieldGoalAttempts$FieldGoalResult == "Good")
+
+#Kickers with Garoppolo made 100% of field goals
+
+OQBFieldGoalAttempts=filter(OtherQBsFor49ers, PlayType == "Field Goal")
+OQBFieldGoalsMade=filter(OQBFieldGoalAttempts, OQBFieldGoalAttempts$FieldGoalResult == "Good")
+
+#Kickers when Garoppolo wasn't starting was about 90%
+
+
+WPA2017=readRDS("/Users/bruceliska/Desktop/ForBruce/wpa_model_results_2017.rds")
+
+
+QBWarStats=data.frame(WPA2017[["QB_table"]])
+
+QBWar=data.frame(QBWarStats$Player_ID_Name,QBWarStats$total_WAR)
+
+
+
+
+#Everything below is to the thanks of Ron Yurko. For more information, go (https://github.com/ryurko/nflWAR)
+
+
+###Here is the code for the NFL WAR Section
+
+add_position_tables <- function(model_data_list) {
+  # INSERT ASSERT HERE REGARDING MODEL_DATA_LIST
+  
+  # Create the position tables using the fact that model_data_list
+  # follows the assumed format with pass_model_df and rush_model_df.
+  
+  # QB table:
+  qb_table_pass <- model_data_list$pass_model_df %>%
+    dplyr::group_by(Passer_ID_Name) %>%
+    dplyr::summarise(Pass_Attempts = n())
+  qb_table_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                 Rusher_Position == "QB") %>%
+    dplyr::group_by(Rusher_ID_Name) %>%
+    dplyr::summarise(Rush_Attempts = n() - sum(Sack),
+                     Sacks = sum(Sack)) %>%
+    dplyr::rename(Passer_ID_Name = Rusher_ID_Name)
+  qb_table <- qb_table_pass %>%
+    dplyr::full_join(qb_table_rush, by = "Passer_ID_Name") %>%
+    dplyr::rename(Player_ID_Name = Passer_ID_Name) %>%
+    dplyr::mutate(Position = "QB",
+                  Pass_Attempts = ifelse(is.na(Pass_Attempts),
+                                         0, Pass_Attempts),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Sacks = ifelse(is.na(Sacks), 0, Sacks),
+                  Total_Plays = Pass_Attempts + Rush_Attempts + Sacks)
+  
+  # RB table:
+  rb_table_rec <- dplyr::filter(model_data_list$pass_model_df,
+                                Receiver_Position %in% c("RB","FB")) %>%
+    dplyr::group_by(Receiver_ID_Name) %>%
+    dplyr::summarise(Receptions = sum(Reception),
+                     Targets = n()) %>%
+    dplyr::rename(Rusher_ID_Name = Receiver_ID_Name)
+  rb_table_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                 Rusher_Position %in% c("RB","FB")) %>%
+    dplyr::group_by(Rusher_ID_Name) %>%
+    dplyr::summarise(Rush_Attempts = n())
+  rb_table <- rb_table_rec %>%
+    dplyr::full_join(rb_table_rush, by = "Rusher_ID_Name") %>%
+    dplyr::rename(Player_ID_Name = Rusher_ID_Name) %>%
+    dplyr::mutate(Position = "RB",
+                  Receptions = ifelse(is.na(Receptions),
+                                      0, Receptions),
+                  Targets = ifelse(is.na(Targets),
+                                   0, Targets),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Total_Plays = Receptions + Targets + Rush_Attempts)
+  
+  # WR table:
+  wr_table_rec <- dplyr::filter(model_data_list$pass_model_df,
+                                Receiver_Position %in% c("WR")) %>%
+    dplyr::group_by(Receiver_ID_Name) %>%
+    dplyr::summarise(Receptions = sum(Reception),
+                     Targets = n())
+  wr_table_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                 Rusher_Position %in% c("WR")) %>%
+    dplyr::group_by(Rusher_ID_Name) %>%
+    dplyr::summarise(Rush_Attempts = n()) %>%
+    dplyr::rename(Receiver_ID_Name = Rusher_ID_Name)
+  wr_table <- wr_table_rec %>%
+    dplyr::full_join(wr_table_rush, by = "Receiver_ID_Name") %>%
+    dplyr::rename(Player_ID_Name = Receiver_ID_Name) %>%
+    dplyr::mutate(Position = "WR",
+                  Receptions = ifelse(is.na(Receptions),
+                                      0, Receptions),
+                  Targets = ifelse(is.na(Targets),
+                                   0, Targets),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Total_Plays = Receptions + Targets + Rush_Attempts)
+  
+  # TE table:
+  te_table_rec <- dplyr::filter(model_data_list$pass_model_df,
+                                Receiver_Position %in% c("TE")) %>%
+    dplyr::group_by(Receiver_ID_Name) %>%
+    dplyr::summarise(Receptions = sum(Reception),
+                     Targets = n())
+  te_table_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                 Rusher_Position %in% c("TE")) %>%
+    dplyr::group_by(Rusher_ID_Name) %>%
+    dplyr::summarise(Rush_Attempts = n()) %>%
+    dplyr::rename(Receiver_ID_Name = Rusher_ID_Name)
+  te_table <- te_table_rec %>%
+    dplyr::full_join(te_table_rush, by = "Receiver_ID_Name") %>%
+    dplyr::rename(Player_ID_Name = Receiver_ID_Name) %>%
+    dplyr::mutate(Position = "TE",
+                  Receptions = ifelse(is.na(Receptions),
+                                      0, Receptions),
+                  Targets = ifelse(is.na(Targets),
+                                   0, Targets),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Total_Plays = Receptions + Targets + Rush_Attempts)
+  
+  
+  # Create the final list to return:
+  append(model_data_list,
+         list("QB_table" = qb_table,
+              "RB_table" = rb_table,
+              "WR_table" = wr_table,
+              "TE_table" = te_table)) %>%
+    return
+}
+
+
+#' Find replacement level for each position
+#'
+#' @param model_data_list List of data frames:
+#' \itemize{
+#' \item{"pass_model_df"} - Passing play-by-play data
+#' \item{"rush_model_df"} - Rushing play-by-play data
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @param replacement_fns List of functions:
+#' \itemize{
+#' \item{"find_replacement_QB"} - Function to find replacement
+#' level QBs
+#' \item{"find_replacement_RB_rush"} - Function to find replacement
+#' level RBs for rushing plays
+#' \item{"find_replacement_WR_TE_rush"} - Function to find replacement
+#' level TEs and WRs for rushing plays
+#' \item{"find_replacement_WR_rec"} - Function to find replacement
+#' level WRs for receiving plays
+#' \item{"find_replacement_RB_rec"} - Function to find replacement
+#' level RBs for receiving plays
+#' \item{"find_replacement_TE_rec"} - Function to find replacement
+#' level TEs for receiving plays
+#' }
+#' @return The input model_data_list but with replacement-level
+#' players' names in the play-by-play data all set to be
+#' Replacement_POSITION and a new column for each of the
+#' positional tables indicating which players are replacement
+#' level.
+#' @examples
+#' # Find positional replacement level:
+#' model_data_list <- model_data_list %>%
+#'   find_positional_replacement_level(replacement_functions)
+#' @export
+
+find_positional_replacement_level <- function(model_data_list,
+                                              replacement_fns) {
+  
+  # Use of the corresponding replacement level functions with their
+  # associated position tables, creating a vector of Player_ID_Names
+  # for each position:
+  replacement_QBs <- replacement_fns$find_replacement_QB(model_data_list)
+  replacement_RBs_rec <- replacement_fns$find_replacement_RB_rec(model_data_list)
+  replacement_WRs_rec <- replacement_fns$find_replacement_WR_rec(model_data_list)
+  replacement_TEs_rec <- replacement_fns$find_replacement_TE_rec(model_data_list)
+  replacement_RBs_rush <- replacement_fns$find_replacement_RB_rush(model_data_list)
+  replacement_WR_TE_rush <- replacement_fns$find_replacement_WR_TE_rush(model_data_list)
+  
+  # Update the play-by-play data:
+  model_data_list$pass_model_df <- model_data_list$pass_model_df %>%
+    dplyr::mutate(Passer_ID_Name = ifelse(Passer_ID_Name %in% replacement_QBs,
+                                          "Replacement_QB", Passer_ID_Name),
+                  Receiver_ID_Name = ifelse(Receiver_ID_Name %in% replacement_RBs_rec,
+                                            "Replacement_RB_rec",
+                                            ifelse(Receiver_ID_Name %in% replacement_WRs_rec,
+                                                   "Replacement_WR_rec",
+                                                   ifelse(Receiver_ID_Name %in% replacement_TEs_rec,
+                                                          "Replacement_TE_rec", Receiver_ID_Name))))
+  
+  model_data_list$rush_model_df <- model_data_list$rush_model_df %>%
+    dplyr::mutate(Rusher_ID_Name = ifelse(Rusher_ID_Name %in% replacement_RBs_rush,
+                                          "Replacement_RB_rush",
+                                          ifelse(Rusher_ID_Name %in% replacement_WR_TE_rush,
+                                                 "Replacement_WR_TE_rush",
+                                                 ifelse(Rusher_ID_Name %in% replacement_QBs,
+                                                        "Replacement_QB",Rusher_ID_Name))))
+  
+  
+  # Create the Replacement_Level indicator columns each in positional table,
+  # as well as a column that will be used to join the player effects from the model
+  # later on for replacement level (Player_Model_ID):
+  model_data_list$QB_table <- model_data_list$QB_table %>%
+    dplyr::mutate(Replacement_Level = ifelse(Player_ID_Name %in% replacement_QBs, 1, 0),
+                  Player_Model_ID = ifelse(Replacement_Level == 1, "Replacement_QB",
+                                           Player_ID_Name))
+  
+  model_data_list$RB_table <- model_data_list$RB_table %>%
+    dplyr::mutate(Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_RBs_rush, 1, 0),
+                  Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_RBs_rec, 1, 0),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_RB_rush",
+                                                Player_ID_Name),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_RB_rec",
+                                               Player_ID_Name))
+  
+  model_data_list$WR_table <- model_data_list$WR_table %>%
+    dplyr::mutate(Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_WRs_rec, 1, 0),
+                  Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_WR_TE_rush, 1, 0),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_WR_rec",
+                                               Player_ID_Name),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_WR_TE_rush",
+                                                Player_ID_Name))
+  
+  model_data_list$TE_table <- model_data_list$TE_table %>%
+    dplyr::mutate(Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_TEs_rec, 1, 0),
+                  Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_WR_TE_rush, 1, 0),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_TE_rec",
+                                               Player_ID_Name),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_WR_TE_rush",
+                                                Player_ID_Name))
+  
+  # Return the updated data:
+  return(model_data_list)
+}
+
+#' Create a function to find replacement level based on the team's depth
+#'
+#' @param replacement_depth Number indicating which rank on team's depth chart the
+#' replacement level can at most be.
+#' @param positions String indicating which position(s) to find the replacement level for,
+#' can only be (1) "QB", (2) "RB", (3) "WR", (4) "TE", or (5) "FB".
+#' @param pbp_type String indicating which type of performance to use, either use
+#' (1) "pass" or (2) "rush".
+#' @return Function that returns a vector of Player_ID_Name values indicating the
+#' replacement level for a given play-by-play dataset based on the replacement_depth to
+#' decide the team depth chart cutoff, as well as the position(s) to search for,
+#' and the type of the play-by-play data that will be used.
+#' @examples
+#' # Create the replacement function for QBs using based on 3rd or higher on the
+#' depth chart using passing performance:
+#' find_replacement_QB <- create_roster_replacement_fn(3, "QB", "pass")
+#' replacement_QBs <- find_replacement_QB(model_data_list)
+#' @export
+
+create_roster_replacement_fn <- function(replacement_depth, positions, pbp_type) {
+  # ADD ASSERTIONS FOR THE INPUT
+  
+  # First case is QBs:
+  if ("QB" %in% positions) {
+    replacement_function <- function(model_data_list) {
+      replacement_qbs <- dplyr::filter(model_data_list$pass_model_df) %>%
+        dplyr::group_by(Passer_ID_Name,posteam) %>%
+        dplyr::summarise(Attempts=n()) %>%
+        dplyr::arrange(posteam,desc(Attempts)) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(posteam) %>%
+        dplyr::mutate(Team_QB = row_number()) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(Replacement_Level = ifelse(Team_QB >= replacement_depth,
+                                                 1, 0)) %>%
+        dplyr::filter(Replacement_Level == 1)
+      
+      return(replacement_qbs$Passer_ID_Name)
+    }
+    
+    # Next for non-QB rushing plays:
+  } else if (pbp_type == "rush") {
+    replacement_function <- function(model_data_list) {
+      replacement_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                        Rusher_Position %in% positions) %>%
+        dplyr::group_by(Rusher_ID_Name,posteam) %>%
+        dplyr::summarise(Rusher_Attempts = n()) %>%
+        dplyr::arrange(posteam, desc(Rusher_Attempts)) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(posteam) %>%
+        dplyr::mutate(Team_Rusher = row_number()) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(Replacement_Level = ifelse(Team_Rusher >= replacement_depth,
+                                                 1, 0)) %>%
+        dplyr::filter(Replacement_Level == 1)
+      
+      return(replacement_rush$Rusher_ID_Name)
+    }
+    
+    # Last for non-QB receiving plays:
+  } else {
+    replacement_function <- function(model_data_list) {
+      replacement_rec <- dplyr::filter(model_data_list$pass_model_df,
+                                       Receiver_Position %in% positions) %>%
+        dplyr::group_by(Receiver_ID_Name,posteam) %>%
+        dplyr::summarise(Targets = n()) %>%
+        dplyr::arrange(posteam, desc(Targets)) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(posteam) %>%
+        dplyr::mutate(Team_Receiver = row_number()) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(Replacement_Level = ifelse(Team_Receiver >= replacement_depth,
+                                                 1, 0)) %>%
+        dplyr::filter(Replacement_Level == 1)
+      
+      return(replacement_rec$Receiver_ID_Name)
+    }
+  }
+  return(replacement_function)
+}
+
+#' Create a function to find replacement level based on league attempts
+#'
+#' @param replacement_depth Number indicating how many players of that position
+#' and performance type each team should have, then every player have that will
+#' be considered replacement level.
+#' @param positions String indicating which position(s) to find the replacement level for,
+#' can only be (1) "QB", (2) "RB" (or "FB"), (3) "WR", or (4) "TE".
+#' @param attempt_type String indicating which type of attempts to use from the position
+#' tables to sort the players by for finding the league replacement level.
+#' @param combine_wrte Indicator for whether or not to combine the TE and WR position tables,
+#' which will be primarily used for rushing attempts by WRs and TEs (default is 0).
+#' @return Function that returns a vector of Player_ID_Name values indicating the
+#' replacement level for the position given the league replacement_depth and attempt_type.
+#' @examples
+#' # Create the replacement function for RBs by stating every team has 3 RBs on their
+#' # team for rushing, and every RB with less rushing attempts than the top 3*32 is
+#' # considered replacement level:
+#' find_replacement_RB_rush <- create_league_replacement_fn(3, "RB", "Rush_Attempts")
+#' replacement_RBs <- find_replacement_RB_rush(model_data_list)
+#' @export
+
+create_league_replacement_fn <- function(replacement_depth, positions, attempt_type, combine_wrte = 0) {
+  
+  # ADD ASSERT FOR INPUT HERE
+  
+  # Paste together desc() with the attempt_type to form the arrange option:
+  player_sort <- paste("desc(", attempt_type, ")", sep = "")
+  
+  # Calculate the league_depth for finding the replacement players:
+  league_depth <- (replacement_depth*32) + 1
+  
+  # Create the expression for grabbing the players by sorting:
+  
+  grab_replacement_players <- . %>%
+    dplyr::arrange_(.dots = as.character(player_sort)) %>%
+    dplyr::slice(league_depth:n()) %>%
+    dplyr::pull(Player_ID_Name)
+  
+  # First case is QBs:
+  if ("QB" %in% positions) {
+    replacement_function <- function(model_data_list) {
+      
+      # Sort the QB table:
+      model_data_list$QB_table %>%
+        grab_replacement_players %>%
+        return
+      
+    }
+    # Else if RB or FB:
+  } else if (positions %in% c("RB", "FB")) {
+    replacement_function <- function(model_data_list) {
+      
+      # Sort the RB table:
+      model_data_list$RB_table %>%
+        grab_replacement_players %>%
+        return
+    }
+    # WR but don't combine with TE
+  } else if ("WR" %in% positions & combine_wrte == 0) {
+    replacement_function <- function(model_data_list) {
+      model_data_list$WR_table %>%
+        grab_replacement_players %>%
+        return
+    }
+    # TE but don't combine with WR
+  } else if ("TE" %in% positions & combine_wrte == 0) {
+    replacement_function <- function(model_data_list) {
+      model_data_list$TE_table %>%
+        grab_replacement_players %>%
+        return
+    }
+    # Combine WR and TE
+  } else {
+    replacement_function <- function(model_data_list) {
+      model_data_list$TE_table %>%
+        dplyr::bind_rows(model_data_list$WR_table) %>%
+        grab_replacement_players %>%
+        return
+    }
+  }
+  
+  # Return the function:
+  return(replacement_function)
+}
+
+
+#' Create QB table stats with team information
+#'
+#' @param model_data_list List of data frames:
+#' \itemize{
+#' \item{"pass_model_df"} - Passing play-by-play data
+#' \item{"rush_model_df"} - Rushing play-by-play data
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @return A different form of the QB table that is grouped by the player and team
+#' level that also includes the player's number and percentage of different attempts with
+#' respect to their team.
+#' @examples
+#' # Create the QB team table:
+#' QB_team_table <- create_QB_team_table(model_data_list)
+#' @export
+
+create_QB_team_table <- function(model_data_list) {
+  
+  # Need to do the similar grouping for the position tables for QBs but now also record
+  # the possession team, first for passing then rushing and join:
+  qb_table_pass <- model_data_list$pass_model_df %>%
+    dplyr::group_by(Passer_ID_Name, posteam) %>%
+    dplyr::summarise(Pass_Attempts = n()) %>%
+    dplyr::ungroup()
+  
+  qb_table_rush <- dplyr::filter(model_data_list$rush_model_df,
+                                 Rusher_Position == "QB") %>%
+    dplyr::group_by(Rusher_ID_Name, posteam) %>%
+    dplyr::summarise(Rush_Attempts = n() - sum(Sack),
+                     Sacks = sum(Sack)) %>%
+    dplyr::rename(Passer_ID_Name = Rusher_ID_Name) %>%
+    dplyr::ungroup()
+  
+  qb_table <- qb_table_pass %>%
+    dplyr::full_join(qb_table_rush,
+                     by = c("Passer_ID_Name", "posteam")) %>%
+    dplyr::rename(Player_ID_Name = Passer_ID_Name) %>%
+    dplyr::mutate(Pass_Attempts = ifelse(is.na(Pass_Attempts),
+                                         0, Pass_Attempts),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Sacks = ifelse(is.na(Sacks), 0, Sacks),
+                  Total_Plays = Pass_Attempts + Rush_Attempts + Sacks)
+  
+  # Now summarise at the the team level:
+  team_qb_table <- qb_table %>%
+    dplyr::group_by(posteam) %>%
+    dplyr::summarise(Team_Pass_Attempts = sum(Pass_Attempts),
+                     Team_Rush_Attempts = sum(Rush_Attempts),
+                     Team_Sacks = sum(Sacks),
+                     Team_Total_Plays = Team_Pass_Attempts + Team_Rush_Attempts + Team_Sacks)
+  
+  # Now join these columns to the qb_table and calculate the player's percentage of each,
+  # then return:
+  qb_table %>%
+    dplyr::left_join(team_qb_table, by = "posteam") %>%
+    dplyr::mutate(Perc_Pass_Attempts = Pass_Attempts / Team_Pass_Attempts,
+                  Perc_Rush_Attempts = Rush_Attempts / Team_Rush_Attempts,
+                  Perc_Sacks = Sacks / Team_Sacks,
+                  Perc_Total_Plays = Total_Plays / Team_Total_Plays,
+                  Position = "QB") %>%
+    return
+}
+
+#' Create non-QB table stats with team information
+#'
+#' @param model_data_list List of data frames:
+#' \itemize{
+#' \item{"pass_model_df"} - Passing play-by-play data
+#' \item{"rush_model_df"} - Rushing play-by-play data
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @param position String indicating which position to use, can be either
+#' (1) RB/FB, (2) WR, or (3) TE.
+#' @return A different form of the position tables that are grouped by the player and team
+#' level that also includes the player's number and percentage of different attempts with
+#' respect to their team.
+#' @examples
+#' # Create the RB team table:
+#' RB_team_table <- create_pos_team_table(model_data_list, "RB")
+#' @export
+
+create_pos_team_table <- function(model_data_list, position) {
+  
+  # Create the pass_df and rush_df based on filtering the position:
+  if (position %in% c("RB", "FB")) {
+    pass_df <- model_data_list$pass_model_df %>%
+      dplyr::filter(Receiver_Position %in% c("RB", "FB"))
+    rush_df <- model_data_list$rush_model_df %>%
+      dplyr::filter(Rusher_Position %in% c("RB", "FB"))
+  } else if (position == "WR") {
+    pass_df <- model_data_list$pass_model_df %>%
+      dplyr::filter(Receiver_Position == "WR")
+    rush_df <- model_data_list$rush_model_df %>%
+      dplyr::filter(Rusher_Position == "WR")
+  } else {
+    pass_df <- model_data_list$pass_model_df %>%
+      dplyr::filter(Receiver_Position == "TE")
+    rush_df <- model_data_list$rush_model_df %>%
+      dplyr::filter(Rusher_Position == "TE")
+  }
+  
+  # Create the two player-team tables then join together:
+  
+  rec_table <- pass_df %>%
+    dplyr::group_by(Receiver_ID_Name, posteam) %>%
+    dplyr::summarise(Targets = n()) %>%
+    dplyr::rename(Player_ID_Name = Receiver_ID_Name) %>%
+    dplyr::ungroup()
+  
+  rush_table <- rush_df %>%
+    dplyr::group_by(Rusher_ID_Name, posteam) %>%
+    dplyr::summarise(Rush_Attempts = n()) %>%
+    dplyr::rename(Player_ID_Name = Rusher_ID_Name) %>%
+    dplyr::ungroup()
+  
+  full_player_table <- rec_table %>%
+    dplyr::full_join(rush_table, by = c("Player_ID_Name", "posteam")) %>%
+    dplyr::mutate(Targets = ifelse(is.na(Targets),
+                                   0, Targets),
+                  Rush_Attempts = ifelse(is.na(Rush_Attempts),
+                                         0, Rush_Attempts),
+                  Total_Plays = Targets + Rush_Attempts)
+  
+  # Now summarise at the the team level:
+  team_table <- full_player_table %>%
+    dplyr::group_by(posteam) %>%
+    dplyr::summarise(Team_Targets = sum(Targets),
+                     Team_Rush_Attempts = sum(Rush_Attempts),
+                     Team_Total_Plays = Team_Targets + Team_Rush_Attempts)
+  
+  # Now join these columns to the full_player_table and calculate the player's
+  #percentage of each, then return:
+  full_player_table <- full_player_table %>%
+    dplyr::left_join(team_table, by = "posteam") %>%
+    dplyr::mutate(Perc_Targets = Targets / Team_Targets,
+                  Perc_Rush_Attempts = Rush_Attempts / Team_Rush_Attempts,
+                  Perc_Total_Plays = Total_Plays / Team_Total_Plays)
+  full_player_table$Position <- rep(position, nrow(full_player_table))
+  return(full_player_table)
+}
+
+
+
+#' Find replacement-level QBs based on the percentage of plays cutoff
+#'
+#' @param qb_team_table Data frame with QB attempts in relation to their team
+#' @param attempt_type String indicating which type of attempts to use from the table
+#' to use for the percent cutoff.
+#' @param attempt_percent Percentage of the given attempt_type for QBs on their team
+#' that serves as a cutoff for replacement level.
+#' @return Vector of Player_ID_Name values indicating the replacement level
+#' QBs given the inputs.
+#' @examples
+#' # Find the replacement level QBs based on 10% cutoff for Total_Plays:
+#' replacement_QBs <- find_percentage_replacement_QB(model_data_list, "Total_Plays", .1)
+#' @export
+
+find_percentage_replacement_QB <- function(qb_team_table, attempt_type, attempt_percent) {
+  
+  # Create the filter expression to find all QBs who have at least that
+  # percentage cutoff:
+  filter_qbs <- paste(attempt_type, " >= ", as.character(attempt_percent), sep = "")
+  
+  # Pull the names of the QBs with at least that cutoff (this is to ensure
+  # that if a QB was traded but on one team had a high percentage of plays
+  # then they will not be considered replacement level):
+  nfl_level_qbs <- qb_team_table %>%
+    dplyr::filter_(.dots = filter_qbs) %>%
+    dplyr::distinct(Player_ID_Name) %>%
+    dplyr::pull(Player_ID_Name)
+  
+  # Now filter to only the replacement level QBs and return:
+  qb_team_table %>%
+    dplyr::filter(!(Player_ID_Name %in% nfl_level_qbs)) %>%
+    dplyr::distinct(Player_ID_Name) %>%
+    dplyr::pull(Player_ID_Name) %>%
+    return
+}
+
+#' Creates function to find percentage based replacement level QBs
+#'
+#' @param attempt_type String indicating which type of attempts to use from the table
+#' to use for the percent cutoff, can be the following options: (1) Perc_Pass_Attempts,
+#' (2) Perc_Rush_Attempts, (3) Perc_Sacks, or (4) Perc_Total_Plays.
+#' @param attempt_percent Percentage of the given attempt_type for QBs on their team
+#' that serves as a cutoff for replacement level.
+#' @return Function that only takes in the model_data_list and returns the
+#' replacement level QBs.
+#' @examples
+#' # First create the function to find the replacement QBs based on "Perc_Total_Plays"
+#' # using a cutoff of 10%:
+#' find_replacement_QBs <- create_percentage_replacement_fn("Perc_Total_Plays", .1)
+#' # Use this function to find the replacement level QBs:
+#' replacement_QBs <- find_replacement_QBs(model_data_list)
+#' @export
+
+create_percentage_replacement_fn <- function(attempt_type, attempt_percent) {
+  replacement_function <- function(model_data_list) {
+    find_percentage_replacement_QB(create_QB_team_table(model_data_list), attempt_type, attempt_percent)
+  }
+  return(replacement_function)
+}
+
+#' Find replacement-level QBs based on the first game of the season for each team
+#'
+#' @param model_data_list List of data frames:
+#' \itemize{
+#' \item{"pass_model_df"} - Passing play-by-play data
+#' \item{"rush_model_df"} - Rushing play-by-play data
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @return Vector of Player_ID_Name values indicating the replacement level
+#' QBs given the input.
+#' @examples
+#' # Find the replacement level QBs by asssuming all QBs that threw the first
+#' # pass in the first game of the season are NFL level while all other QBs are
+#' # replacement level:
+#' replacement_QBs <- find_game_one_replacement_QB(model_data_list)
+#' @export
+
+find_game_one_replacement_QB <- function(model_data_list) {
+  
+  # Vector of teams:
+  teams <- unique(model_data_list$pass_model_df$posteam)
+  
+  # For each team find the QBs that played in the first quarter
+  # of the first game for each team:
+  first_qbs <- purrr::map_chr(teams, function(x) {
+    model_data_list$pass_model_df %>%
+      dplyr::filter(posteam == x, qtr == 1) %>%
+      dplyr::arrange(desc(GameID), desc(TimeSecs)) %>%
+      dplyr::group_by(GameID) %>%
+      dplyr::summarise(first_qb = dplyr::first(Passer_ID_Name)) %>%
+      dplyr::slice(1) %>%
+      dplyr::pull(first_qb)
+  })
+  
+  # Now the QBs that didn't play first are replacement level:
+  purrr::map(teams, function(x) {
+    model_data_list$pass_model_df %>%
+      dplyr::filter(posteam == x, !(Passer_ID_Name %in% first_qbs)) %>%
+      dplyr::select(Passer_ID_Name) %>%
+      dplyr::distinct(Passer_ID_Name) %>%
+      dplyr::pull(Passer_ID_Name)
+  }) %>%
+    purrr::flatten_chr()
+}
+
+
+#' Add replacement level information to simulation data
+#'
+#' @param sim_data_list List of data frames in the simulation:
+#' \itemize{
+#' \item{"pass_model_df"} - Passing play-by-play data
+#' \item{"rush_model_df"} - Rushing play-by-play data
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @param replacement_tables List of position tables
+#' that designate which players are replacement level:
+#' \itemize{
+#' \item{"QB_table"} - Table of QBs
+#' \item{"RB_table"} - Table of RBs
+#' \item{"WR_table"} - Table of WRs
+#' \item{"TE_table"} - Table of TEs
+#' }
+#' @return The input sim_data_list but with replacement-level
+#' players' names in the play-by-play data all set to be
+#' Replacement_POSITION and a new column for each of the
+#' positional tables indicating which players are replacement
+#' level.
+#' @examples
+#' # Join positional replacement level information from
+#' # the 2017 position tables to the simulated data:
+#' sim_data_list <- sim_data_list %>%
+#'   add_replacement_level_sim(replacement_tables_17)
+#' @export
+
+add_replacement_level_sim <- function(sim_data_list, replacement_tables) {
+  
+  # From the replacement_tables grab the IDs of the types of replacement
+  # level players:
+  
+  replacement_QBs <- replacement_tables$QB_table %>%
+    dplyr::filter(Player_Model_ID == "Replacement_QB") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  replacement_RBs_rush <- replacement_tables$RB_table %>%
+    dplyr::filter(Player_Model_ID_Rush == "Replacement_RB_rush") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  replacement_RBs_rec <- replacement_tables$RB_table %>%
+    dplyr::filter(Player_Model_ID_Rec == "Replacement_RB_rec") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  replacement_WR_TE_rush <- replacement_tables$WR_table %>%
+    dplyr::bind_rows(replacement_tables$TE_table) %>%
+    dplyr::filter(Player_Model_ID_Rush == "Replacement_WR_TE_rush") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  replacement_WRs_rec <- replacement_tables$WR_table %>%
+    dplyr::filter(Player_Model_ID_Rec == "Replacement_WR_rec") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  replacement_TEs_rec <- replacement_tables$TE_table %>%
+    dplyr::filter(Player_Model_ID_Rec == "Replacement_TE_rec") %>%
+    dplyr::pull(Player_ID_Name)
+  
+  
+  # Update the play-by-play data:
+  sim_data_list$pass_model_df <- sim_data_list$pass_model_df %>%
+    dplyr::mutate(Passer_ID_Name = ifelse(Passer_ID_Name %in% replacement_QBs,
+                                          "Replacement_QB", Passer_ID_Name),
+                  Receiver_ID_Name = ifelse(Receiver_ID_Name %in% replacement_RBs_rec,
+                                            "Replacement_RB_rec",
+                                            ifelse(Receiver_ID_Name %in% replacement_WRs_rec,
+                                                   "Replacement_WR_rec",
+                                                   ifelse(Receiver_ID_Name %in% replacement_TEs_rec,
+                                                          "Replacement_TE_rec", Receiver_ID_Name))))
+  
+  sim_data_list$rush_model_df <- sim_data_list$rush_model_df %>%
+    dplyr::mutate(Rusher_ID_Name = ifelse(Rusher_ID_Name %in% replacement_RBs_rush,
+                                          "Replacement_RB_rush",
+                                          ifelse(Rusher_ID_Name %in% replacement_WR_TE_rush,
+                                                 "Replacement_WR_TE_rush",
+                                                 ifelse(Rusher_ID_Name %in% replacement_QBs,
+                                                        "Replacement_QB",Rusher_ID_Name))))
+  
+  # Create the Replacement_Level indicator columns each in positional table,
+  # as well as a column that will be used to join the player effects from the model
+  # later on for replacement level (Player_Model_ID):
+  sim_data_list$QB_table <- sim_data_list$QB_table %>%
+    dplyr::mutate(Replacement_Level = ifelse(Player_ID_Name %in% replacement_QBs, 1, 0),
+                  Player_Model_ID = ifelse(Replacement_Level == 1, "Replacement_QB",
+                                           Player_ID_Name))
+  
+  sim_data_list$RB_table <- sim_data_list$RB_table %>%
+    dplyr::mutate(Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_RBs_rush, 1, 0),
+                  Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_RBs_rec, 1, 0),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_RB_rush",
+                                                Player_ID_Name),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_RB_rec",
+                                               Player_ID_Name))
+  
+  sim_data_list$WR_table <- sim_data_list$WR_table %>%
+    dplyr::mutate(Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_WRs_rec, 1, 0),
+                  Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_WR_TE_rush, 1, 0),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_WR_rec",
+                                               Player_ID_Name),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_WR_TE_rush",
+                                                Player_ID_Name))
+  
+  sim_data_list$TE_table <- sim_data_list$TE_table %>%
+    dplyr::mutate(Replacement_Level_Receiver = ifelse(Player_ID_Name %in% replacement_TEs_rec, 1, 0),
+                  Replacement_Level_Rusher = ifelse(Player_ID_Name %in% replacement_WR_TE_rush, 1, 0),
+                  Player_Model_ID_Rec = ifelse(Replacement_Level_Receiver == 1, "Replacement_TE_rec",
+                                               Player_ID_Name),
+                  Player_Model_ID_Rush = ifelse(Replacement_Level_Rusher == 1, "Replacement_WR_TE_rush",
+                                                Player_ID_Name))
+  
+  # Return the updated data:
+  return(sim_data_list)
+  
+}
+
+
+
+# Apply the pipeline of functions to the given year and save the data using the WPA based model for 
+# estimating WAR and also join all of the standard statistics for players.
+# (Modify the saveRDS file path for your destination)
+
+# First WPA based WAR:
+walk(c(2009:2017), function(x) {
+  season_results <- x %>% 
+    get_pbp_data() %>%
+    add_positions(x) %>%
+    add_model_variables() %>%
+    prepare_model_data() %>%
+    add_position_tables() %>%
+    join_position_statistics() %>%
+    find_positional_replacement_level(league_replacement_functions) %>%
+    estimate_player_value_added(wp_model_formula_list) %>%
+    calculate_above_replacement() %>%
+    convert_prob_to_wins()
+  
+  saveRDS(season_results, file = paste("wpa_model_results_", as.character(x), ".rds", sep = ""))
+})
+
+
+###Just a note, this wouldn't work on my computer, as my computer didn't have enough processing power for it, so I did it on someone else's computer. It should still work.
+
+
+
+######Make sure you change the part below so it imports correctly on your computer
+
+WPA2017=readRDS("/Users/wpa_model_results_2017.rds")
+
+#This is making a seperate data frame just for the QB table
+
+QBWarStats=data.frame(WPA2017[["QB_table"]])
+
+#This is only taking the quarterback name and the total_WAR and putting into a data frame for easier comparison
+
+QBWar=data.frame(QBWarStats$Player_ID_Name,QBWarStats$total_WAR)
+
